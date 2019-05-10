@@ -8,7 +8,7 @@ from sqlalchemy.orm import sessionmaker
 db_url = 'localhost:5432'
 db_name = 'simaps'
 db_user = 'root'
-db_password = 'admin'
+db_password = 'droneadmin'
 engine = create_engine(f'mysql+pymysql://{db_user}:{db_password}@{db_url}/{db_name}')
 Session = sessionmaker(bind=engine)
 
