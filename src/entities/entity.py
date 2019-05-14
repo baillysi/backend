@@ -21,7 +21,8 @@ class Entity:
     updated_at = Column(DateTime)
     last_updated_by = Column(String(16))
 
-    def __init__(self, created_by):
+    def __init__(self, user):
         self.created_at = datetime.now()
         self.updated_at = datetime.now()
-        self.last_updated_by = created_by
+        self.last_updated_by = user
+

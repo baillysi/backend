@@ -16,10 +16,10 @@ CORS(app)
 
 @app.route('/')
 def index():
-    return 'Welcome to my API'
+    return jsonify('Welcome to my API'), 200
 
 
-@app.route('/maps/list')
+@app.route('/maps')
 def get():
     # fetch from database
     session = Session()
@@ -33,29 +33,41 @@ def get():
     return jsonify(resp.data), 200
 
 
-@app.route('/maps/add', methods=['POST'])
+@app.route('/maps/<int:id>', methods=['GET'])
+def get_id(id):
+    # fetch from database
+    session = Session()
+    map_object = session.query(Map).get(id)
+    if map_object is None:
+        return not_found()
+    else:
+        # serialize output
+        schema = MapSchema(many=False)
+        resp = schema.dump(map_object)
+
+    session.close()
+    return jsonify(resp.data), 200
+
+
+@app.route('/maps', methods=['POST'])
 def post():
     # deserialize input
     json_data = request.get_json()
     map_tdb = MapSchema().load(json_data)
 
     # create new map
-    map_object = Map(title=map_tdb.data['title'], description=map_tdb.data['description'], created_by="Simon")
+    map_object = Map(title=map_tdb.data['title'], description=map_tdb.data['description'], user="Simon")
 
     # add & persist to database
     session = Session()
     session.add(map_object)
     session.commit()
 
-    # send it as request response - serialized
-    schema = MapSchema(many=False)
-    resp = schema.dump(map_object)
-
     session.close()
-    return jsonify(resp.data), 201
+    return jsonify(f'{request.url}/{map_object.id}'), 201
 
 
-@app.route('/maps/update/<int:id>', methods=['PUT'])
+@app.route('/maps/<int:id>', methods=['PUT'])
 def put(id):
     # deserialize input
     json_data = request.get_json()
@@ -90,7 +102,18 @@ def delete(id):
     session.commit()
 
     session.close()
-    return jsonify('You\'ve just deleted a map successfully'), 200
+    return jsonify('You\'ve just deleted a map successfully'), 204
+
+
+@app.errorhandler(404)
+def not_found(error=None):
+    message = {
+        'status': 404,
+        'message': 'Not Found: ' + request.url,
+    }
+    resp = jsonify(message)
+    resp.status_code = 404
+    return resp
 
 
 if __name__ == "__main__":
